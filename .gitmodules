@@ -1,0 +1,4 @@
+[submodule "lib_unity/Unity"]
+	path = lib_unity/Unity
+	url = https://github.com/ThrowTheSwitch/Unity
+	branch = master
