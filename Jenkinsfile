@@ -26,8 +26,12 @@ pipeline {
             runningOn(env.NODE_NAME)
             dir("lib_unity") {
               checkout scm
+              sh "git submodule update --init --recursive"
             }
             createVenv("lib_unity/requirements.txt")
+            withVenv {
+              sh "pip install -r lib_unity/requirements.txt"
+            }
             dir("lib_unity/example/uut_and_tests") {
               withTools(params.TOOLS_VERSION) {
                 withVenv {
