@@ -45,7 +45,7 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
         endif()
 
         set(this_target ${APP_BUILD_TARGETS})
-        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}")
+        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}$$")
 
         set(TEST_RUNNER ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner.c)
         add_custom_command(
