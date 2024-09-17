@@ -6,6 +6,7 @@ lib_unity Change Log
 
   * ADDED: cmake for automatically generating test runners for XCommon CMake
     applications. Also an example of using this feature.
+  * CHANGED: submodule of upstream Unity to tag v2.6.0
 
 2.5.2
 -----
