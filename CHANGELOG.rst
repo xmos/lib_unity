@@ -1,8 +1,8 @@
 lib_unity Change Log
 ====================
 
-UNRELEASED
-----------
+2.6.1
+-----
 
   * FIXED:   build failures with XCommon CMake BUILD_NATIVE enabled
 

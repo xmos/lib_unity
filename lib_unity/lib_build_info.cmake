@@ -1,5 +1,5 @@
 set(LIB_NAME lib_unity)
-set(LIB_VERSION 2.6.0)
+set(LIB_VERSION 2.6.1)
 set(LIB_INCLUDES Unity/src)
 set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
