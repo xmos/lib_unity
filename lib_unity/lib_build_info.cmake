@@ -1,9 +1,12 @@
 set(LIB_NAME lib_unity)
-set(LIB_VERSION 2.6.0)
+set(LIB_VERSION 2.6.1)
 set(LIB_INCLUDES Unity/src)
 set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
-set(LIB_COMPILER_FLAGS -Wno-xcore-fptrgroup)
+
+if(NOT BUILD_NATIVE)
+    set(LIB_COMPILER_FLAGS -Wno-xcore-fptrgroup)
+endif()
 
 option(LIB_UNITY_USE_FIXTURE "Include unity memory and fixtures extras" ON)
 if(LIB_UNITY_USE_FIXTURE)
