@@ -14,6 +14,7 @@ if(NOT BUILD_NATIVE)
                                 -Wno-xcore-fptrgroup
             )
     else() # vx4
+        list(APPEND LIB_C_SRCS unity_helper.c)
         set(LIB_COMPILER_FLAGS 
                                 -Os
                                 -Wfptrgroup
