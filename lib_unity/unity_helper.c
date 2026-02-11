@@ -1,6 +1,10 @@
 
 #if defined(__VX4B__)
 
+#ifndef UNITY_TEST_RUNNER_STACK_SIZE
+#define UNITY_TEST_RUNNER_STACK_SIZE (1024)
+#endif
+
 /**
  * @brief Macro to declare XMOS linker resource annotations for a function.
  */
@@ -10,6 +14,6 @@
     asm(".resource_list_empty " #FN ", \"parallel_callees\""); \
     asm(".resource_const " #FN ", \"stack_frame_bytes\", " #BYTES)
 
-UNITY_STACKFUNCTION(UnityTestRunner, 1024);
+UNITY_STACKFUNCTION(UnityTestRunner, UNITY_TEST_RUNNER_STACK_SIZE);
 
 #endif // defined(__VX4B__)
