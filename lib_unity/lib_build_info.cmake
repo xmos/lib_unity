@@ -4,11 +4,15 @@ set(LIB_INCLUDES Unity/src)
 set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
-include(CheckSymbolExists)
-check_symbol_exists(__xcore__ "" __XCORE__)
+# conditional depending on target
+if(CMAKE_C_COMPILER_VERSION VERSION_EQUAL "3.6.0")
+    set(__XS3__ ON) # XS3 (XTC 15.3.1)
+else()
+    set(__XS3__ OFF) # VX4
+endif()
 
 if(NOT BUILD_NATIVE)
-    if(__XCORE__) # xs3
+    if(__XS3__) # xs3
         set(LIB_COMPILER_FLAGS 
                                 -Os 
                                 -Wno-xcore-fptrgroup
