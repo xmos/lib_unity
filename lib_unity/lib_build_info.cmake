@@ -5,25 +5,17 @@ set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
 # conditional depending on target
-if(CMAKE_C_COMPILER_VERSION VERSION_EQUAL "3.6.0")
-    set(__XS3__ ON) # XS3 (XTC 15.3.1)
-else()
-    set(__XS3__ OFF) # VX4
-endif()
-
 if(NOT BUILD_NATIVE)
-    if(__XS3__) # xs3
+    if(APP_BUILD_ARCH STREQUAL "xs3a") # xs3
         set(LIB_COMPILER_FLAGS 
                                 -Os 
                                 -Wno-xcore-fptrgroup
             )
-    else() # vx4
+    elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
         list(APPEND LIB_C_SRCS unity_helper.c)
         set(LIB_COMPILER_FLAGS 
                                 -Os
                                 -Wfptrgroup
-                                -ffunction-sections
-                                -fdata-sections
             )
     endif()
 endif() # BUILD_NATIVE
