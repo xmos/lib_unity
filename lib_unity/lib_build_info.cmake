@@ -15,7 +15,7 @@ if(NOT BUILD_NATIVE)
         list(APPEND LIB_C_SRCS unity_helper.c)
         set(LIB_COMPILER_FLAGS 
                                 -Os
-                                -Wfptrgroup
+                                -Wno-fptrgroup
             )
     endif()
 endif() # BUILD_NATIVE
