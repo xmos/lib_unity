@@ -4,9 +4,24 @@ set(LIB_INCLUDES Unity/src)
 set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
+include(CheckSymbolExists)
+check_symbol_exists(__xcore__ "" __XCORE__)
+
 if(NOT BUILD_NATIVE)
-    set(LIB_COMPILER_FLAGS -Wno-xcore-fptrgroup)
-endif()
+    if(__XCORE__) # xs3
+        set(LIB_COMPILER_FLAGS 
+                                -Os 
+                                -Wno-xcore-fptrgroup
+            )
+    else() # vx4
+        set(LIB_COMPILER_FLAGS 
+                                -Os
+                                -Wfptrgroup
+                                -ffunction-sections
+                                -fdata-sections
+            )
+    endif()
+endif() # BUILD_NATIVE
 
 option(LIB_UNITY_USE_FIXTURE "Include unity memory and fixtures extras" ON)
 if(LIB_UNITY_USE_FIXTURE)
@@ -63,4 +78,3 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
         set_target_properties(${this_target} PROPERTIES SOURCES "${target_sources}")
     endforeach()
 endif()
-

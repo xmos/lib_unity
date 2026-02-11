@@ -1,6 +1,11 @@
 lib_unity Change Log
 ====================
 
+UNRELEASED
+----------
+
+  * ADDED: Support for vx4 builds.
+
 2.6.1
 -----
 
