@@ -5,20 +5,17 @@ set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
 # conditional depending on target
-if(NOT BUILD_NATIVE)
-    if(APP_BUILD_ARCH STREQUAL "xs3a") # xs3
-        set(LIB_COMPILER_FLAGS 
-                                -Os 
-                                -Wno-xcore-fptrgroup
-            )
-    elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
-        list(APPEND LIB_C_SRCS unity_helper.c)
-        set(LIB_COMPILER_FLAGS 
-                                -Os
-                                -Wfptrgroup
-            )
-    endif()
-endif() # BUILD_NATIVE
+if(APP_BUILD_ARCH STREQUAL "xs3a") # xs3
+    set(WNO_FPTR -Wno-xcore-fptrgroup)
+elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
+    set(WNO_FPTR -Wno-fptrgroup)
+    list(APPEND LIB_C_SRCS unity_helper.c)
+else() # native
+    set(WNO_FPTR "")
+endif()
+
+
+set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
 
 option(LIB_UNITY_USE_FIXTURE "Include unity memory and fixtures extras" ON)
 if(LIB_UNITY_USE_FIXTURE)
@@ -69,7 +66,7 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${config_sources}
                          VERBATIM)
-        set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS -Wno-xcore-fptrgroup)
+        set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
         get_target_property(target_sources ${this_target} SOURCES)
         list(APPEND target_sources ${TEST_RUNNER})
         set_target_properties(${this_target} PROPERTIES SOURCES "${target_sources}")
