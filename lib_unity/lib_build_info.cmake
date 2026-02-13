@@ -66,7 +66,10 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${config_sources}
                          VERBATIM)
+        
+        if(APP_BUILD_ARCH STREQUAL "xs3a" OR APP_BUILD_ARCH STREQUAL "vx4b")
         set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
+        endif()
         get_target_property(target_sources ${this_target} SOURCES)
         list(APPEND target_sources ${TEST_RUNNER})
         set_target_properties(${this_target} PROPERTIES SOURCES "${target_sources}")
