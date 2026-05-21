@@ -59,6 +59,7 @@ pipeline {
                     }
                 }
 
+                // TODO: add checks
                 // stage('Repo checks') {
                 //     steps {
                 //         warnError("Repo checks failed")
@@ -79,7 +80,7 @@ pipeline {
 
                 stage('Tests') {
                     steps {
-                        dir("${REPO_NAME}/example/uut_and_tests") {
+                        dir("${REPO_NAME}/examples/uut_and_tests") {
                             withTools(params.TOOLS_VERSION) {
                                 withVenv {
                                     runPytest()
