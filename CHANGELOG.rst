@@ -1,8 +1,8 @@
 lib_unity change log
 ====================
 
-UNRELEASED
-----------
+2.7.0
+-----
 
   * ADDED: Initial upport for vx4 builds.
   * CHANGED: Tools version to 15.3.1.
