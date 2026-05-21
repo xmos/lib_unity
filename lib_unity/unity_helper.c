@@ -1,3 +1,5 @@
+// Copyright 2026 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #if defined(__VX4B__)
 
 #ifndef UNITY_TEST_RUNNER_STACK_SIZE
