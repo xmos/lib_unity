@@ -15,7 +15,6 @@ Compatibility
 -------------
 
 - **Toolchain:** XMOS XTC Tools 15.3.1 or later
-- **Unity version:** 2.6.0 (vendored)
 - **Build system:** xcommon_cmake
 
 How to use
@@ -33,8 +32,8 @@ use the latest commit on the ``develop`` branch.
 See the `xcommon_cmake documentation <https://www.xmos.com/documentation/XM-014363-PC/html/>`_ for
 dependency management details.
 
-What the library provides
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Features
+~~~~~~~~
 
 After adding the module, your application gains:
 
@@ -63,7 +62,7 @@ Test runner (``examples/basic/src/main.c``):
 How to build the example
 ------------------------
 
-From the repository root, navigate to the example directory and run CMake followed by ``xmake``:
+To build the example, run the following commands from the root of the repository:
 
 .. code-block:: console
 
@@ -74,14 +73,17 @@ From the repository root, navigate to the example directory and run CMake follow
 How to run the example
 ----------------------
 
-Simulate the test binary using ``xsim``:
+Once compiled, to run the example on the simulator, use:
 
 .. code-block:: console
 
     xsim bin/test_basic.xe
 
-.. note:: Running on hardware is outside the scope of this example. To run on a development board,
-   use ``xrun`` with an appropriate target adapter.
+Or on hardware:
+
+.. code-block:: console
+
+    xrun bin/test_basic.xe
 
 Expected output
 ---------------
