@@ -19,6 +19,8 @@
     asm(".resource_list_empty " #FN ", \"parallel_callees\""); \
     asm(".resource_const " #FN ", \"stack_frame_bytes\", " UNITY_STRINGIFY(BYTES))
 
+#ifndef LIB_UNITY_AUTO_TEST_RUNNER
 UNITY_STACKFUNCTION(UnityTestRunner, UNITY_TEST_RUNNER_STACK_SIZE);
+#endif
 
 #endif // defined(__VX4B__)

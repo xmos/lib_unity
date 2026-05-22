@@ -15,7 +15,7 @@ pipeline {
 
     parameters {
         string(
-            name: 'TOOLS_VERSION',
+            name: 'TOOLS_XS3_VERSION',
             defaultValue: '15.3.1',
             description: 'XTC tools version'
         )
@@ -58,9 +58,7 @@ pipeline {
                         stage('Examples build') {
                             steps {
                                 dir("${REPO_NAME}/examples") {
-                                    withTools(params.TOOLS_VERSION) {
-                                        xcoreBuild()
-                                    }
+                                    xcoreBuild(toolsVersion: params.TOOLS_XS3_VERSION)
                                 }
                             }
                         }
@@ -85,7 +83,7 @@ pipeline {
                         stage('Tests') {
                             steps {
                                 dir("${REPO_NAME}/examples/uut_and_tests") {
-                                    withTools(params.TOOLS_VERSION) {
+                                    withTools(params.TOOLS_XS3_VERSION) {
                                         withVenv {
                                             runPytest()
                                         }
@@ -118,13 +116,22 @@ pipeline {
                                     sh "git submodule update --init --recursive"
                                     createVenv(reqFile: "requirements.txt")
                                     dir("examples") {
-                                        withTools(params.TOOLS_VX4_VERSION) {
-                                            xcoreBuild(toolsVersion: params.TOOLS_VX4_VERSION)
-                                        }
+                                        xcoreBuild(toolsVersion: params.TOOLS_VX4_VERSION)
                                     }
                                 } // dir(REPO_NAME)
                             } // steps
                         } // stage("Checkout and Build")
+                        stage("tests") {
+                            steps {
+                                dir("${REPO_NAME}/examples/uut_and_tests") {
+                                    withTools(params.TOOLS_VX4_VERSION) {
+                                        withVenv {
+                                            runPytest()
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } // stages
                     post {
                         cleanup {
