@@ -2,20 +2,29 @@
 
 @Library('xmos_jenkins_shared_library@v0.52.0') _
 
+def getRepoNameFromScm() {
+    def (server, user, repo) = extractFromScmUrl()
+    return repo
+}
+
 getApproval()
 pipeline {
-
     agent none
 
     parameters {
         string(
-            name: 'TOOLS_VERSION',
+            name: 'TOOLS_XS3_VERSION',
             defaultValue: '15.3.1',
             description: 'XTC tools version'
         )
         string(
+            name: 'TOOLS_VX4_VERSION',
+            defaultValue: '-j --repo arch_vx_slipgate -b develop -a XTC 1184',
+            description: 'XTC Slipgate tools version'
+        )
+        string(
             name: 'XMOSDOC_VERSION',
-            defaultValue: 'v8.2.0',
+            defaultValue: 'v8.1.0',
             description: 'xmosdoc version'
         )
     }
@@ -28,80 +37,100 @@ pipeline {
 
     stages {
         stage('🏗️ Build and test') {
-            agent {
-                label 'x86_64 && linux && documentation'
-            }
-
-            stages {
-                stage('Checkout') {
-                    steps {
-
-                        println "Stage running on ${env.NODE_NAME}"
-
-                        script {
-                            def (server, user, repo) = extractFromScmUrl()
-                            env.REPO_NAME = repo
-                        }
-
-                        dir(REPO_NAME){
-                            checkoutScmShallow()
-                            sh "git submodule update --init --recursive"
-                            createVenv(reqFile: "requirements.txt")
-                        }
-                    }
-                }
-
-                stage('Examples build') {
-                    steps {
-                        dir("${REPO_NAME}/examples") {
-                            xcoreBuild()
-                        }
-                    }
-                }
-
-                // TODO: add checks
-                // stage('Repo checks') {
-                //     steps {
-                //         warnError("Repo checks failed")
-                //         {
-                //             runRepoChecks("${WORKSPACE}/${REPO_NAME}")
-                //         }
-                //     }
-                // }
-
-                // TODO: add docs
-                // stage('Doc build') {
-                //     steps {
-                //         dir(REPO_NAME) {
-                //             buildDocs()
-                //         }
-                //     }
-                // }
-
-                stage('Tests') {
-                    steps {
-                        dir("${REPO_NAME}/examples/uut_and_tests") {
-                            withTools(params.TOOLS_VERSION) {
-                                withVenv {
-                                    runPytest()
+            parallel {
+                stage('Target (XS3)') {
+                    agent { label 'x86_64 && linux && documentation' }
+                    stages {
+                        stage('Checkout') {
+                            steps {
+                                println "Stage running on ${env.NODE_NAME}"
+                                script {env.REPO_NAME = getRepoNameFromScm()}
+                                dir(REPO_NAME){
+                                    checkoutScmShallow()
+                                    sh "git submodule update --init --recursive"
+                                    createVenv(reqFile: "requirements.txt")
                                 }
                             }
                         }
-                    }
-                }
 
-                stage("Archive sandbox") {
-                    steps {
-                        archiveSandbox(REPO_NAME)
+                        stage('Examples build') {
+                            steps {
+                                dir("${REPO_NAME}/examples") {
+                                    xcoreBuild(toolsVersion: params.TOOLS_XS3_VERSION)
+                                }
+                            }
+                        }
+
+                        stage('Repo checks') {
+                            steps {
+                                warnError("Repo checks failed")
+                                {
+                                    runRepoChecks("${WORKSPACE}/${REPO_NAME}")
+                                }
+                            }
+                        }
+
+                        stage('Doc build') {
+                            steps {
+                                dir(REPO_NAME) {
+                                    buildDocs()
+                                }
+                            }
+                        }
+
+                        stage('Tests') {
+                            steps {
+                                dir("${REPO_NAME}/examples/uut_and_tests") {
+                                    withTools(params.TOOLS_XS3_VERSION) {
+                                        withVenv {
+                                            runPytest()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        stage("Archive sandbox") {
+                            steps {
+                                archiveSandbox(REPO_NAME)
+                            }
+                        }
+                    } // stages
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
                     }
-                }
-            } // stages
-            post {
-                cleanup {
-                    xcoreCleanSandbox()
-                }
-            }
-        } // stage 'Build and test'
+                } // XS3
+
+                stage('Target (VX4)') {
+                    agent {label "vx4"}
+                    stages {
+                        stage("Checkout and Build") {
+                            steps {
+                                script {env.REPO_NAME = getRepoNameFromScm()}
+                                dir(REPO_NAME){
+                                    checkoutScmShallow()
+                                    sh "git submodule update --init --recursive"
+                                    createVenv(reqFile: "requirements.txt")
+                                    dir("examples") {
+                                        xcoreBuild(
+                                            toolsVersion: params.TOOLS_VX4_VERSION,
+                                            cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416'
+                                        )
+                                    }
+                                } // dir(REPO_NAME)
+                            } // steps
+                        } // stage("Checkout and Build")
+                    } // stages
+                    post {
+                        cleanup {
+                            xcoreCleanSandbox()
+                        }
+                    } // post
+                } // VX4
+            } // parallel
+        } // stage('Build and test')
 
         stage('🚀 Release') {
             when {

@@ -1,39 +1,41 @@
 set(LIB_NAME lib_unity)
-set(LIB_VERSION 2.6.1)
+set(LIB_VERSION 2.7.0)
 set(LIB_INCLUDES Unity/src)
 set(LIB_C_SRCS Unity/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
-# conditional depending on target
+# cmake options
+option(LIB_UNITY_USE_FIXTURE "Include unity memory and fixtures extras" ON)
+option(LIB_UNITY_USE_MEMORY "Include unity memory and memorys extras" ON)
+option(LIB_UNITY_AUTO_TEST_RUNNER "Enable to generate a test runner for each build config" OFF)
+
+# compiler flags (based on target)
 if(APP_BUILD_ARCH STREQUAL "xs3a") # xs3
     set(WNO_FPTR -Wno-xcore-fptrgroup)
 elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
     set(WNO_FPTR -Wno-fptrgroup)
-    list(APPEND LIB_C_SRCS unity_helper.c)
 else() # native
     set(WNO_FPTR "")
 endif()
-
-
 set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
 
-option(LIB_UNITY_USE_FIXTURE "Include unity memory and fixtures extras" ON)
+# conditional sources and includes
 if(LIB_UNITY_USE_FIXTURE)
     list(APPEND LIB_INCLUDES Unity/extras/fixture/src)
     list(APPEND LIB_C_SRCS Unity/extras/fixture/src/unity_fixture.c)
 endif()
 
-option(LIB_UNITY_USE_MEMORY "Include unity memory and memorys extras" ON)
 if(LIB_UNITY_USE_MEMORY)
     list(APPEND LIB_INCLUDES Unity/extras/memory/src)
     list(APPEND LIB_C_SRCS Unity/extras/memory/src/unity_memory.c)
 endif()
 
+if(APP_BUILD_ARCH STREQUAL "vx4b")
+    list(APPEND LIB_C_SRCS unity_helper.c)
+endif()
+
 XMOS_REGISTER_MODULE()
 
-option(LIB_UNITY_AUTO_TEST_RUNNER
-       "Enable to generate a test runner for each build config"
-       OFF)
 if(LIB_UNITY_AUTO_TEST_RUNNER)
     find_program(RUBY_EXE ruby REQUIRED)
 
