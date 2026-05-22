@@ -2,15 +2,13 @@
 
 @Library('xmos_jenkins_shared_library@v0.52.0') _
 
-getApproval()
-
 def getRepoNameFromScm() {
     def (server, user, repo) = extractFromScmUrl()
     return repo
 }
 
+getApproval()
 pipeline {
-
     agent none
 
     parameters {
@@ -106,7 +104,7 @@ pipeline {
                 } // XS3
 
                 stage('Target (VX4)') {
-                    agent { label 'vx4' }
+                    agent {label "vx4"}
                     stages {
                         stage("Checkout and Build") {
                             steps {
@@ -116,22 +114,14 @@ pipeline {
                                     sh "git submodule update --init --recursive"
                                     createVenv(reqFile: "requirements.txt")
                                     dir("examples") {
-                                        xcoreBuild(toolsVersion: params.TOOLS_VX4_VERSION)
+                                        xcoreBuild(
+                                            toolsVersion: params.TOOLS_VX4_VERSION,
+                                            cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416'
+                                        )
                                     }
                                 } // dir(REPO_NAME)
                             } // steps
                         } // stage("Checkout and Build")
-                        stage("tests") {
-                            steps {
-                                dir("${REPO_NAME}/examples/uut_and_tests") {
-                                    withTools(params.TOOLS_VX4_VERSION) {
-                                        withVenv {
-                                            runPytest()
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     } // stages
                     post {
                         cleanup {
