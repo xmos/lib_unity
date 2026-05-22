@@ -32,9 +32,6 @@ endif()
 
 if(APP_BUILD_ARCH STREQUAL "vx4b")
     list(APPEND LIB_C_SRCS unity_helper.c)
-    if(LIB_UNITY_AUTO_TEST_RUNNER)
-        list(APPEND LIB_COMPILER_FLAGS -DLIB_UNITY_AUTO_TEST_RUNNER)
-    endif()
 endif()
 
 XMOS_REGISTER_MODULE()
