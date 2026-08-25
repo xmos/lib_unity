@@ -23,6 +23,12 @@ set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
 if(LIB_UNITY_USE_FIXTURE)
     list(APPEND LIB_INCLUDES Unity/extras/fixture/src)
     list(APPEND LIB_C_SRCS Unity/extras/fixture/src/unity_fixture.c)
+    if(APP_BUILD_ARCH STREQUAL "vx4b")
+        # Force the UnityTestRunner stack-size resource annotation into the same
+        # translation unit that defines it
+        set_source_files_properties(Unity/extras/fixture/src/unity_fixture.c
+            PROPERTIES COMPILE_OPTIONS "-include;${CMAKE_CURRENT_LIST_DIR}/unity_helper.h")
+    endif()
 endif()
 
 if(LIB_UNITY_USE_MEMORY)
@@ -31,7 +37,7 @@ if(LIB_UNITY_USE_MEMORY)
 endif()
 
 if(APP_BUILD_ARCH STREQUAL "vx4b")
-    list(APPEND LIB_C_SRCS unity_helper.c)
+    list(APPEND LIB_C_SRCS unity_helper.h)
 endif()
 
 XMOS_REGISTER_MODULE()
