@@ -1,11 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.52.0') _
-
-def getRepoNameFromScm() {
-    def (server, user, repo) = extractFromScmUrl()
-    return repo
-}
+@Library('xmos_jenkins_shared_library@v0.56.0') _
 
 getApproval()
 pipeline {
@@ -16,6 +11,11 @@ pipeline {
             name: 'TOOLS_VERSION_XS',
             defaultValue: '15.3.1',
             description: 'XTC tools version'
+        )
+        string(
+            name: 'TOOLS_VERSION_VX',
+            defaultValue: 'bob@develop',
+            description: 'VX tools version'
         )
         string(
             name: 'TOOLS_VERSION_VX_XCC',
@@ -37,100 +37,88 @@ pipeline {
 
     stages {
         stage('🏗️ Build and test') {
-            parallel {
-                stage('Target (XS3)') {
-                    agent { label 'x86_64 && linux && documentation' }
-                    stages {
-                        stage('Checkout') {
-                            steps {
-                                println "Stage running on ${env.NODE_NAME}"
-                                script {env.REPO_NAME = getRepoNameFromScm()}
-                                dir(REPO_NAME){
-                                    checkoutScmShallow()
-                                    sh "git submodule update --init --recursive"
-                                    createVenv(reqFile: "requirements.txt")
-                                }
-                            }
+            agent {
+                label 'x86_64 && linux && documentation'
+            }
+
+            stages {
+                stage('Checkout') {
+                    steps {
+                        println "Stage running on ${env.NODE_NAME}"
+
+                        script {
+                            def (server, user, repo) = extractFromScmUrl()
+                            env.REPO_NAME = repo
                         }
 
-                        stage('Examples build') {
-                            steps {
-                                dir("${REPO_NAME}/examples") {
-                                    xcoreBuild(toolsVersion: params.TOOLS_VERSION_XS)
-                                }
-                            }
-                        }
-
-                        stage('Repo checks') {
-                            steps {
-                                warnError("Repo checks failed")
-                                {
-                                    runRepoChecks("${WORKSPACE}/${REPO_NAME}")
-                                }
-                            }
-                        }
-
-                        stage('Doc build') {
-                            steps {
-                                dir(REPO_NAME) {
-                                    buildDocs()
-                                }
-                            }
-                        }
-
-                        stage('Tests') {
-                            steps {
-                                dir("${REPO_NAME}/examples/uut_and_tests") {
-                                    withTools(params.TOOLS_VERSION_XS) {
-                                        withVenv {
-                                            runPytest()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        stage("Archive sandbox") {
-                            steps {
-                                archiveSandbox(REPO_NAME)
-                            }
-                        }
-                    } // stages
-                    post {
-                        cleanup {
-                            xcoreCleanSandbox()
+                        dir(REPO_NAME) {
+                            checkoutScmShallow()
+                            sh "git submodule update --init --recursive"
+                            createVenv(reqFile: "requirements.txt")
                         }
                     }
-                } // XS3
+                }
 
-                stage('Target (VX4)') {
-                    agent {label "vx4"}
-                    stages {
-                        stage("Checkout and Build") {
-                            steps {
-                                script {env.REPO_NAME = getRepoNameFromScm()}
-                                dir(REPO_NAME){
-                                    checkoutScmShallow()
-                                    sh "git submodule update --init --recursive"
-                                    createVenv(reqFile: "requirements.txt")
-                                    dir("examples") {
-                                        xcoreBuild(
-                                            toolsVersion: params.TOOLS_VERSION_VX_XCC,
-                                            cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416'
-                                        )
-                                    }
-                                } // dir(REPO_NAME)
-                            } // steps
-                        } // stage("Checkout and Build")
-                    } // stages
-                    post {
-                        cleanup {
-                            xcoreCleanSandbox()
+                stage('Examples build') {
+                    steps {
+                        dir("${REPO_NAME}/examples") {
+                            xcoreBuildAllArch()
                         }
-                    } // post
-                } // VX4
-            } // parallel
-        } // stage('Build and test')
+                    }
+                }
+
+                stage('Repo checks') {
+                    steps {
+                        warnError("Repo checks failed")
+                        {
+                            runRepoChecks("${WORKSPACE}/${REPO_NAME}")
+                        }
+                    }
+                }
+
+                stage('Doc build') {
+                    steps {
+                        dir(REPO_NAME) {
+                            buildDocs()
+                        }
+                    }
+                }
+
+                stage('Tests') {
+                    steps {
+                        dir("${REPO_NAME}/examples/uut_and_tests") {
+                            withVenv {
+                                withTools(params.TOOLS_VERSION_XS) {
+                                    xcoreBuild(archiveBins: false)
+                                    runPytest()
+                                }
+
+                                withTools(params.TOOLS_VERSION_VX) {
+                                    xcoreBuild(archiveBins: false)
+                                    runPytest()
+                                }
+
+                                withTools(params.TOOLS_VERSION_VX_XCC) {
+                                    xcoreBuild(archiveBins: false, cmakeOpts: '-DAPP_HW_TARGET=XK-EVK-XU416')
+                                    runPytest()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage("Archive sandbox") {
+                    steps {
+                        archiveSandbox(REPO_NAME)
+                    }
+                }
+            } // stages
+            post {
+                cleanup {
+                    xcoreCleanSandbox()
+                }
+            }
+        } // stage 'Build and test'
 
         stage('🚀 Release') {
             when {

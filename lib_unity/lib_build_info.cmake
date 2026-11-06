@@ -23,6 +23,7 @@ set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
 if(LIB_UNITY_USE_FIXTURE)
     list(APPEND LIB_INCLUDES Unity/extras/fixture/src)
     list(APPEND LIB_C_SRCS Unity/extras/fixture/src/unity_fixture.c)
+    list(APPEND LIB_COMPILER_FLAGS -DLIB_UNITY_USE_FIXTURE=1)
 endif()
 
 if(LIB_UNITY_USE_MEMORY)
@@ -30,9 +31,11 @@ if(LIB_UNITY_USE_MEMORY)
     list(APPEND LIB_C_SRCS Unity/extras/memory/src/unity_memory.c)
 endif()
 
-# Include the Unity Helper macros only when building with the transitional tools
-if(NOT XMOS_IS_RV AND APP_BUILD_ARCH STREQUAL "vx4b")
-    list(APPEND LIB_C_SRCS unity_helper.c)
+# Unity Helper: describes UnityTestRunner's function pointer calls to the linker.
+# Always built; the source itself is guarded (vx4 builds with the fixture enabled).
+list(APPEND LIB_C_SRCS unity_helper.c)
+if(XMOS_IS_RV)
+    list(APPEND LIB_COMPILER_FLAGS -DUNITY_HELPER_RV_TOOLS=1)
 endif()
 
 XMOS_REGISTER_MODULE()
@@ -59,8 +62,9 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
             message(FATAL_ERROR "More than 1 test file for config ${config_suffix}: ${config_sources}")
         endif()
 
+        # Build targets are <app>_<config>, or <app>_<config>_objlib with the RISC-V tools
         set(this_target ${APP_BUILD_TARGETS})
-        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}$$")
+        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}(_objlib)?$")
 
         set(TEST_RUNNER ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner.c)
         add_custom_command(
@@ -69,7 +73,7 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${config_sources}
                          VERBATIM)
-        
+
         if(APP_BUILD_ARCH STREQUAL "xs3a" OR APP_BUILD_ARCH STREQUAL "vx4b")
         set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
         endif()
