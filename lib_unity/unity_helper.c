@@ -1,24 +1,19 @@
 // Copyright 2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#if defined(__VX4B__)
+//
+// UnityTestRunner calls each test's setup, body and teardown through function
+// pointers, so the linker cannot work out its stack usage. Unity's sources are
+// not modified; instead this file describes UnityTestRunner to the linker with
+// resource directives.
+#if defined(__VX4B__) && defined(LIB_UNITY_USE_FIXTURE)
 
-#ifndef UNITY_TEST_RUNNER_STACK_SIZE
-#define UNITY_TEST_RUNNER_STACK_SIZE 1024
+#if defined(UNITY_HELPER_RV_TOOLS)
+asm(".resource_list_concat UnityTestRunner, \"callees\", \"unity_test_functions\"");
+#else
+asm(".resource_const UnityTestRunner, \"stack_frame_bytes\", 64");
+asm(".resource_list_add UnityTestRunner, \"callees\", strstr, UnityPrint, putchar, setjmp, UnityPointer_UndoAllSets, UnityConcludeFixtureTest");
+asm(".resource_list_empty UnityTestRunner, \"tail_callees\"");
+asm(".resource_list_empty UnityTestRunner, \"parallel_callees\"");
 #endif
 
-/* Stringify helpers to force macro expansion */
-#define UNITY_STRINGIFY_(x) #x
-#define UNITY_STRINGIFY(x) UNITY_STRINGIFY_(x)
-
-/**
- * @brief Macro to declare XMOS linker resource annotations for a function.
- */
-#define UNITY_STACKFUNCTION(FN, BYTES) \
-    asm(".resource_list_empty " #FN ", \"callees\""); \
-    asm(".resource_list_empty " #FN ", \"tail_callees\""); \
-    asm(".resource_list_empty " #FN ", \"parallel_callees\""); \
-    asm(".resource_const " #FN ", \"stack_frame_bytes\", " UNITY_STRINGIFY(BYTES))
-
-UNITY_STACKFUNCTION(UnityTestRunner, UNITY_TEST_RUNNER_STACK_SIZE);
-
-#endif // defined(__VX4B__)
+#endif // defined(__VX4B__) && defined(LIB_UNITY_USE_FIXTURE)

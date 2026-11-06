@@ -3,16 +3,11 @@ cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 project(unit_test)
 
-set(SUPPORTED_TARGETS "XK-EVK-XU316;XK-EVK-XU416")
-
-if(NOT DEFINED APP_HW_TARGET)
+if(NOT DEFINED APP_HW_TARGET AND NOT BUILD_NATIVE AND NOT XMOS_IS_RV)
     set(APP_HW_TARGET XK-EVK-XU316)
 endif()
-if(NOT APP_HW_TARGET IN_LIST SUPPORTED_TARGETS)
-  message(FATAL_ERROR "Unsupported target ${APP_HW_TARGET}.")
-endif()
 
-set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../..)
 set(APP_DEPENDENT_MODULES lib_unity)
 
 # add uut and test sources
@@ -20,8 +15,7 @@ file(GLOB APP_C_SRCS CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} uut_sr
 set(APP_INCLUDES uut_src)
 
 set(COMPILER_FLAGS      -g
-                        -report
-                        -Wall 
+                        -Wall
                         -Wextra)
 
 # Create config for each test

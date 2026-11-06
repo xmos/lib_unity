@@ -5,10 +5,6 @@ import subprocess
 import re
 from pathlib import Path
 
-def pytest_configure():
-    subprocess.run(["cmake", "-B", "build"], check=True)
-    subprocess.run(["cmake", "--build", "build"], check=True)
-
 def pytest_collect_file(parent, file_path: Path):
     """Custom collection function to inform pytest that xe files contain tests."""
     if file_path.suffix == ".xe":
