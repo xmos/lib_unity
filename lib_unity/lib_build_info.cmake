@@ -41,6 +41,10 @@ endif()
 XMOS_REGISTER_MODULE()
 
 if(LIB_UNITY_AUTO_TEST_RUNNER)
+    if(APP_BUILD_ARCH STREQUAL "vx4b" AND NOT XMOS_IS_RV)
+        message(WARNING "lib_unity: the auto test runner calls the tests through function pointers, so the XCC linker cannot work out their stack usage and will warn about it")
+    endif()
+
     find_program(RUBY_EXE ruby REQUIRED)
 
     # Find all the build configs
@@ -49,6 +53,13 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
     # remove private xcommon variable which happens to have
     # this regex
     list(FILTER all_vars EXCLUDE REGEX "SOURCE_FILES_VARS")
+
+    # Build targets are <app>_<config>, or <app>_<config>_objlib with the RISC-V tools
+    if(XMOS_IS_RV)
+        set(target_suffix "_objlib")
+    else()
+        set(target_suffix "")
+    endif()
 
     foreach(source_config_var ${all_vars})
         string(REGEX MATCH "SOURCE_FILES_(.+)" ____ ${source_config_var})
@@ -62,14 +73,8 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
             message(FATAL_ERROR "More than 1 test file for config ${config_suffix}: ${config_sources}")
         endif()
 
-        # Build targets are <app>_<config>, or <app>_<config>_objlib with the RISC-V tools
-        if(XMOS_IS_RV)
-            set(target_suffix "_objlib")
-        else()
-            set(target_suffix "")
-        endif()
         set(this_target ${APP_BUILD_TARGETS})
-        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}${target_suffix}$")
+        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}${target_suffix}$$")
 
         set(TEST_RUNNER ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner.c)
         add_custom_command(
@@ -78,27 +83,12 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${config_sources}
                          VERBATIM)
-
-        set(runner_source ${TEST_RUNNER})
-        if(APP_BUILD_ARCH STREQUAL "vx4b" AND NOT XMOS_IS_RV)
-            # XCC: the runner's static run_test() must be described to the linker in its
-            # own translation unit, so compile the runner through a wrapper that annotates
-            # it (see unity_helper.h). The generated runner itself is not compiled.
-            set(runner_source ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner_wrapper.c)
-            file(CONFIGURE OUTPUT ${runner_source} CONTENT
-                 "#include \"${CMAKE_CURRENT_LIST_DIR}/unity_helper.h\"\nUNITY_STACKFUNCTION(run_test, UNITY_TEST_RUNNER_STACK_SIZE);\n#include \"${TEST_RUNNER}\"\n")
-            set_source_files_properties(${TEST_RUNNER} PROPERTIES HEADER_FILE_ONLY TRUE)
-            set_source_files_properties(${runner_source} PROPERTIES OBJECT_DEPENDS ${TEST_RUNNER})
-        endif()
-
+        
         if(APP_BUILD_ARCH STREQUAL "xs3a" OR APP_BUILD_ARCH STREQUAL "vx4b")
-        set_source_files_properties(${runner_source} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
+        set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
         endif()
         get_target_property(target_sources ${this_target} SOURCES)
         list(APPEND target_sources ${TEST_RUNNER})
-        if(NOT runner_source STREQUAL TEST_RUNNER)
-            list(APPEND target_sources ${runner_source})
-        endif()
         set_target_properties(${this_target} PROPERTIES SOURCES "${target_sources}")
     endforeach()
 endif()

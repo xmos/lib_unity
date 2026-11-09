@@ -1,12 +1,9 @@
 // Copyright 2026 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 //
-// Unity calls each test's setup, body and teardown through function pointers, so
-// the XCC linker cannot work out the stack usage of the functions that make those
-// calls. UNITY_STACKFUNCTION gives such a function a fixed stack allowance with
-// resource directives. It is used for:
-//  - UnityTestRunner (fixture), in unity_helper.c
-//  - run_test (auto-generated runner), in the runner wrapper made by lib_build_info.cmake
+// UnityTestRunner calls each test's setup, body and teardown through function
+// pointers, so the XCC linker cannot work out its stack usage. UNITY_STACKFUNCTION
+// gives it a fixed stack allowance with resource directives (see unity_helper.c).
 #ifndef UNITY_HELPER_H
 #define UNITY_HELPER_H
 
