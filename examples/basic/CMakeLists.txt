@@ -14,9 +14,4 @@ set(APP_DEPENDENT_MODULES    "lib_unity")
 
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../..)
 
-# sinf() is in libm, which the RISC-V tools do not link by default
-if(XMOS_IS_RV)
-    link_libraries(m)
-endif()
-
 XMOS_REGISTER_APP()

@@ -17,7 +17,7 @@ elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
 else() # native
     set(WNO_FPTR "")
 endif()
-set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
+set(LIB_COMPILER_FLAGS -Os -Werror ${WNO_FPTR})
 
 # conditional sources and includes
 if(LIB_UNITY_USE_FIXTURE)
@@ -63,8 +63,13 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
         endif()
 
         # Build targets are <app>_<config>, or <app>_<config>_objlib with the RISC-V tools
+        if(XMOS_IS_RV)
+            set(target_suffix "_objlib")
+        else()
+            set(target_suffix "")
+        endif()
         set(this_target ${APP_BUILD_TARGETS})
-        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}(_objlib)?$")
+        list(FILTER this_target INCLUDE REGEX ".*_${config_suffix}${target_suffix}$")
 
         set(TEST_RUNNER ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner.c)
         add_custom_command(
@@ -74,11 +79,26 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
                          DEPENDS ${config_sources}
                          VERBATIM)
 
+        set(runner_source ${TEST_RUNNER})
+        if(APP_BUILD_ARCH STREQUAL "vx4b" AND NOT XMOS_IS_RV)
+            # XCC: the runner's static run_test() must be described to the linker in its
+            # own translation unit, so compile the runner through a wrapper that annotates
+            # it (see unity_helper.h). The generated runner itself is not compiled.
+            set(runner_source ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner_wrapper.c)
+            file(CONFIGURE OUTPUT ${runner_source} CONTENT
+                 "#include \"${CMAKE_CURRENT_LIST_DIR}/unity_helper.h\"\nUNITY_STACKFUNCTION(run_test, UNITY_TEST_RUNNER_STACK_SIZE);\n#include \"${TEST_RUNNER}\"\n")
+            set_source_files_properties(${TEST_RUNNER} PROPERTIES HEADER_FILE_ONLY TRUE)
+            set_source_files_properties(${runner_source} PROPERTIES OBJECT_DEPENDS ${TEST_RUNNER})
+        endif()
+
         if(APP_BUILD_ARCH STREQUAL "xs3a" OR APP_BUILD_ARCH STREQUAL "vx4b")
-        set_source_files_properties(${TEST_RUNNER} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
+        set_source_files_properties(${runner_source} PROPERTIES COMPILE_OPTIONS ${WNO_FPTR})
         endif()
         get_target_property(target_sources ${this_target} SOURCES)
         list(APPEND target_sources ${TEST_RUNNER})
+        if(NOT runner_source STREQUAL TEST_RUNNER)
+            list(APPEND target_sources ${runner_source})
+        endif()
         set_target_properties(${this_target} PROPERTIES SOURCES "${target_sources}")
     endforeach()
 endif()

@@ -3,12 +3,11 @@
 
 #include "unity.h"
 #include "unity_fixture.h"
-#include <math.h>
 
 TEST_GROUP_RUNNER(test_basic) {
   RUN_TEST_CASE(test_basic, sum_test);
   RUN_TEST_CASE(test_basic, div_test);
-  RUN_TEST_CASE(test_basic, sinf_test);
+  RUN_TEST_CASE(test_basic, float_test);
 }
 
 TEST_GROUP(test_basic);
@@ -25,9 +24,9 @@ TEST(test_basic, div_test) {
   TEST_ASSERT_EQUAL_INT(5, result);
 }
 
-TEST(test_basic, sinf_test) {
+TEST(test_basic, float_test) {
+  const float radius = 2.0f;
   const float pi = 3.14159265f;
-  float angle = pi / 2.0f;
-  float result = sinf(angle);
-  TEST_ASSERT_FLOAT_WITHIN(0.0001f, 1.0f, result);
+  float area = pi * radius * radius;
+  TEST_ASSERT_FLOAT_WITHIN(0.0001f, 12.5663706f, area);
 }
