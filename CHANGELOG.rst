@@ -1,8 +1,8 @@
 lib_unity change log
 ====================
 
-UNRELEASED
-----------
+2.8.0
+-----
 
   * ADDED: Support for VX4 builds with the RISC-V (clang) tools.
   * ADDED: Linker stack information for the function pointer calls in the auto-generated test runners on VX4.
@@ -33,4 +33,3 @@ UNRELEASED
 -----
 
   * Initial version of library with tag v2.5.2 of upstream Unity submodule
-

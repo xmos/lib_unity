@@ -5,7 +5,7 @@ lib_unity: Template library
 ##############################
 
 :vendor: XMOS
-:version: 2.7.0
+:version: 2.8.0
 :scope: General Use
 :description: A test framework for C, adapted from the Unity test framework
 :category: General Purpose
