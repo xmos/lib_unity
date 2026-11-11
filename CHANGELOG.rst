@@ -33,3 +33,4 @@ lib_unity change log
 -----
 
   * Initial version of library with tag v2.5.2 of upstream Unity submodule
+
