@@ -5,10 +5,12 @@ lib_unity change log
 -----
 
   * ADDED: Support for VX4 builds with the RISC-V (clang) tools.
-  * ADDED: Linker stack information for the function pointer calls in the auto-generated test runners on VX4.
+  * ADDED: Linker stack information for the function pointer calls in the
+    auto-generated test runners on VX4.
   * CHANGED: Examples build and tests run with all supported tools.
   * FIXED: Auto test runner generation with the RISC-V tools.
-  * FIXED: uut_and_tests example used the wrong sandbox directory when built from the examples directory.
+  * FIXED: uut_and_tests example used the wrong sandbox directory when built
+    from the examples directory.
 
 2.7.0
 -----
