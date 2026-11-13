@@ -1,79 +1,146 @@
-lib_unity
-=========
+###############################
+lib_unity: Unity test framework
+###############################
 
-.. warning:: This documentation is a work in progress.
+************
+Introduction
+************
 
-Overview
---------
+``lib_unity`` adapts the `Unity unit test framework <https://github.com/ThrowTheSwitch/Unity>`_
+for use with the `XCommon CMake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_
+build system. It compiles and links Unity into an `xcore` application and can optionally generate
+a test runner for each build configuration.
 
-``lib_unity`` is a small utility library that adapts the `Unity unit test framework
-<https://github.com/ThrowTheSwitch/Unity>`_ for use with the ``xcommon_cmake`` based XMOS build
-system. It provides the necessary CMake integration to compile and link Unity into your XCore
-application, along with helper fixtures for structuring test groups and a test runner.
+Third-party source
+==================
 
-Compatibility
--------------
+This library uses the Unity test framework, unmodified, included as a Git submodule in
+``third_party/Unity``.
 
-- **Toolchain:** XMOS XTC Tools 15.3.1 or later
-- **Build system:** xcommon_cmake
+- Upstream: https://github.com/ThrowTheSwitch/Unity
+- Upstream version: v2.6.1
 
-How to use
-----------
+Unity is distributed under the MIT licence, see ``third_party/Unity/LICENSE.txt``.
 
-Add ``lib_unity`` to your application's ``APP_DEPENDENT_MODULES`` list in ``CMakeLists.txt``:
+Accessing the library software
+==============================
+
+There are two ways to access the software in this library:
+
+- Download the latest release ZIP package from the `XMOS Website <https://www.xmos.com/libraries/>`_ and extract it to a chosen sandbox directory.
+- Clone the Git repository from `XMOS GitHub <https://github.com/xmos>`_.
+
+The ZIP file download is the recommended option for most users, as it is a quick way to get started with the library.
+
+*****
+Usage
+*****
+
+To use this library in an application include ``lib_unity`` in the application's
+``APP_DEPENDENT_MODULES`` list in `CMakeLists.txt`, for example:
 
 .. code-block:: cmake
 
     set(APP_DEPENDENT_MODULES "lib_unity")
 
-Pin the dependency to a release tag where possible. If no version is specified, xcommon_cmake will
-use the latest commit on the ``develop`` branch. 
+.. note:: Dependent modules should be pinned to release versions where possible, otherwise the
+   latest commit on the `develop` branch will be used.  For further details on managing modules,
+   pinning to a release version and other options, please see the page `xcommon-cmake Dependency Management <https://www.xmos.com/documentation/XM-015090-PC/html/doc/dependency_management.html>`_.
 
-See the `xcommon_cmake documentation <https://www.xmos.com/documentation/XM-014363-PC/html/>`_ for
-dependency management details.
+Tests are written with the Unity API, available via the ``unity.h`` header file, and optionally
+the Unity Fixture API, available via ``unity_fixture.h``:
 
-Features
-~~~~~~~~
+.. code-block:: C
 
-After adding the module, your application gains:
+    #include "unity.h"
+    #include "unity_fixture.h"
 
-- The Unity and Unity Fixture headers (``unity.h``, ``unity_fixture.h``)
-- A CMake target that compiles and links the Unity source files automatically
-- No additional configuration is required; Unity's default settings are used
+Configuration
+=============
 
-Example
--------
+The following CMake options can be set in the application's ``CMakeLists.txt`` before
+``XMOS_REGISTER_APP()``:
 
-The repository includes a minimal working example in ``examples/basic`` that demonstrates a test
-group and a test runner using the Unity Fixture API.
+.. list-table::
+   :header-rows: 1
+   :widths: 30 15 55
 
-Test file (``examples/basic/src/test_basic.c``):
+   * - Option
+     - Default
+     - Description
+   * - ``LIB_UNITY_USE_FIXTURE``
+     - ``ON``
+     - Include the Unity Fixture extras (``unity_fixture.h``).
+   * - ``LIB_UNITY_USE_MEMORY``
+     - ``ON``
+     - Include the Unity Memory extras.
+   * - ``LIB_UNITY_AUTO_TEST_RUNNER``
+     - ``OFF``
+     - Generate a test runner for each build configuration. Each configuration must have exactly
+       one source file named ``test_*``. Requires Ruby.
+
+Known issues
+============
+
+UnityTestRunner calls each test through a function pointer, so the linker's stack calculation
+does not include the tests' stack usage. Tests with large stacks or in multi-threaded applications
+may overflow their stack.
+
+********************
+Example applications
+********************
+
+Two examples are provided in the ``examples`` directory:
+
+- ``basic``: a test group and a test runner written with the Unity Fixture API.
+- ``uut_and_tests``: a unit under test with one build configuration per test file, using
+  ``LIB_UNITY_AUTO_TEST_RUNNER`` to generate the test runners.
+
+The ``basic`` test file (``examples/basic/src/test_basic.c``):
 
 .. literalinclude:: ../../examples/basic/src/test_basic.c
     :language: c
     :start-after: #include "unity.h"
 
-Test runner (``examples/basic/src/main.c``):
+And its test runner (``examples/basic/src/main.c``):
 
 .. literalinclude:: ../../examples/basic/src/main.c
     :language: c
     :start-after: #include "unity_fixture.h"
 
-How to build the example
-------------------------
+Building the example
+====================
 
-To build the example, run the following commands from the root of the repository:
+This section assumes that the `XMOS XTC Tools <https://www.xmos.com/software-tools/>`_ have been
+downloaded and installed. The required version is specified in the accompanying ``README``.
+
+Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_.
+
+Special attention should be paid to the section on
+`Installation of Required Third-Party Tools <https://www.xmos.com/documentation/XM-014363-PC/html/installation/install-configure/install-tools/install_prerequisites.html>`_.
+
+To configure the build, the following commands should be run from an XTC command prompt:
 
 .. code-block:: console
 
-    cd examples/basic
-    cmake -B build -G "Unix Makefiles"
-    xmake -C build
+    cd lib_unity/examples/basic
+    cmake -G "Unix Makefiles" -B build
 
-How to run the example
-----------------------
+If any dependencies are missing they will be retrieved automatically during this step.
 
-Once compiled, to run the example on the simulator, use:
+The application binaries should then be built using ``xmake``:
+
+.. code-block:: console
+
+    xmake -j -C build
+
+The binary ``test_basic.xe`` will be generated in the ``bin`` directory of the ``basic`` example.
+
+Running the example
+===================
+
+From an XTC command prompt, the following command should be run from the ``examples/basic``
+directory to run the tests on the simulator:
 
 .. code-block:: console
 
@@ -83,10 +150,7 @@ Or on hardware:
 
 .. code-block:: console
 
-    xrun bin/test_basic.xe
-
-Expected output
----------------
+    xrun --io bin/test_basic.xe
 
 A passing test run produces:
 

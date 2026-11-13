@@ -30,7 +30,9 @@ Features
 Known issues
 ************
 
-* None
+* UnityTestRunner calls each test through a function pointer, so the linker's stack
+  calculation does not include the tests' stack usage. Tests with large stacks or in
+  multi-threaded applications may overflow their stack.
 
 ****************
 Development repo

@@ -1,7 +1,11 @@
+# lib name and version
 set(LIB_NAME lib_unity)
 set(LIB_VERSION 2.8.0)
-set(LIB_INCLUDES Unity/src)
-set(LIB_C_SRCS Unity/src/unity.c)
+
+# source code
+set(LIB_UNITY_UNITY_DIR ../third_party/Unity)
+set(LIB_INCLUDES ${LIB_UNITY_UNITY_DIR}/src)
+set(LIB_C_SRCS ${LIB_UNITY_UNITY_DIR}/src/unity.c)
 set(LIB_DEPENDENT_MODULES "")
 
 # cmake options
@@ -17,41 +21,37 @@ elseif(APP_BUILD_ARCH STREQUAL "vx4b") # vx4
 else() # native
     set(WNO_FPTR "")
 endif()
-set(LIB_COMPILER_FLAGS -Os -Werror ${WNO_FPTR})
+set(LIB_COMPILER_FLAGS -Os ${WNO_FPTR})
+
+# Unity calls each test through not annotated function pointers
+# Note: the error is also valid for xs3 but the report section will signal as MAYBE and cover the worst case. 
+if (APP_BUILD_ARCH STREQUAL "vx4b")
+    message(WARNING "lib_unity: UnityTestRunner stack usage is not calculable")
+endif()
 
 # conditional sources and includes
 if(LIB_UNITY_USE_FIXTURE)
-    list(APPEND LIB_INCLUDES Unity/extras/fixture/src)
-    list(APPEND LIB_C_SRCS Unity/extras/fixture/src/unity_fixture.c)
+    list(APPEND LIB_INCLUDES ${LIB_UNITY_UNITY_DIR}/extras/fixture/src)
+    list(APPEND LIB_C_SRCS ${LIB_UNITY_UNITY_DIR}/extras/fixture/src/unity_fixture.c)
     list(APPEND LIB_COMPILER_FLAGS -DLIB_UNITY_USE_FIXTURE=1)
 endif()
 
 if(LIB_UNITY_USE_MEMORY)
-    list(APPEND LIB_INCLUDES Unity/extras/memory/src)
-    list(APPEND LIB_C_SRCS Unity/extras/memory/src/unity_memory.c)
-endif()
-
-# Unity Helper: describes UnityTestRunner's function pointer calls to the linker.
-# Always built; the source itself is guarded (vx4 builds with the fixture enabled).
-list(APPEND LIB_C_SRCS unity_helper.c)
-if(XMOS_IS_RV)
-    list(APPEND LIB_COMPILER_FLAGS -DUNITY_HELPER_RV_TOOLS=1)
+    list(APPEND LIB_INCLUDES ${LIB_UNITY_UNITY_DIR}/extras/memory/src)
+    list(APPEND LIB_C_SRCS ${LIB_UNITY_UNITY_DIR}/extras/memory/src/unity_memory.c)
 endif()
 
 XMOS_REGISTER_MODULE()
 
+# Auto test runner generation for each build config
 if(LIB_UNITY_AUTO_TEST_RUNNER)
-    if(APP_BUILD_ARCH STREQUAL "vx4b" AND NOT XMOS_IS_RV)
-        message(WARNING "lib_unity: the auto test runner calls the tests through function pointers, so the XCC linker cannot work out their stack usage and will warn about it")
-    endif()
-
     find_program(RUBY_EXE ruby REQUIRED)
 
     # Find all the build configs
     get_cmake_property(all_vars VARIABLES)
     list(FILTER all_vars INCLUDE REGEX "SOURCE_FILES_.*")
-    # remove private xcommon variable which happens to have
-    # this regex
+    
+    # remove private xcommon variable which happens to have this regex
     list(FILTER all_vars EXCLUDE REGEX "SOURCE_FILES_VARS")
 
     # Build targets are <app>_<config>, or <app>_<config>_objlib with the RISC-V tools
@@ -79,7 +79,7 @@ if(LIB_UNITY_AUTO_TEST_RUNNER)
         set(TEST_RUNNER ${CMAKE_CURRENT_BINARY_DIR}/${config_suffix}_runner.c)
         add_custom_command(
                          OUTPUT ${TEST_RUNNER}
-                         COMMAND ${RUBY_EXE} ${CMAKE_CURRENT_LIST_DIR}/Unity/auto/generate_test_runner.rb ${config_sources} ${TEST_RUNNER}
+                         COMMAND ${RUBY_EXE} ${CMAKE_CURRENT_LIST_DIR}/${LIB_UNITY_UNITY_DIR}/auto/generate_test_runner.rb ${config_sources} ${TEST_RUNNER}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${config_sources}
                          VERBATIM)

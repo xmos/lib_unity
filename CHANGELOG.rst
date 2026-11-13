@@ -4,11 +4,10 @@ lib_unity change log
 2.8.0
 -----
 
-  * ADDED: Support for VX4 builds with the RISC-V (clang) tools.
-  * ADDED: Linker stack information for the function pointer calls in the
-    auto-generated test runners on VX4.
+  * CHANGED: Extended support for vx4 builds.
   * CHANGED: Examples build and tests run with all supported tools.
-  * FIXED: Auto test runner generation with the RISC-V tools.
+  * CHANGED: Unity submodule moved to third_party/Unity.
+  * FIXED: Auto test runner generation on VX4.
   * FIXED: uut_and_tests example used the wrong sandbox directory when built
     from the examples directory.
 
